@@ -5,7 +5,7 @@ class Net(nn.Module):
 
     def __init__(self, layers):
         super(Net, self).__init__()
-        self.dropout = nn.Dropout(p=0.2)
+        self.dropout = nn.Dropout(p=0.1)
         self.hidden = nn.ModuleList()
         self.cnn = nn.ModuleList()
         self.maxpooling = nn.ModuleList()
@@ -22,7 +22,8 @@ class Net(nn.Module):
 
         for input, output in zip(layers, layers[1:]):
             layer = nn.Linear(input, output)
-            nn.init.kaiming_uniform_(layer.weight, nonlinearity="relu")
+            nn.init.kaiming_uniform_(layer.weight,
+                                        nonlinearity="relu") # "He" method
             self.hidden.append(layer)
 
 
