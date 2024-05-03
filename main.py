@@ -1,43 +1,46 @@
-from torch import load as tload
-from torchvision.io import read_image, ImageReadMode
-from torch import argmax as targmax
-from torch import max as tmax
-from Neural_Network import Net
-from torchvision.transforms import CenterCrop, Resize
-import streamlit as st
+import torch.nn as nn
+from torch import relu
 
-picture = st.file_uploader("Choose a picture of a handwritten digit:", type=['png', 'jpg'])
+class Net(nn.Module):
 
-if picture:
-    with open("uploaded.jpg", "wb") as f:
-        f.write(picture.read())
+    def __init__(self, layers):
+        super(Net, self).__init__()
+        self.dropout = nn.Dropout(p=0.1)
+        self.hidden = nn.ModuleList()
+        self.cnn = nn.ModuleList()
+        self.maxpooling = nn.ModuleList()
 
+        self.cnn.append(nn.Conv2d(in_channels=1, # Gray pictures
+                                        out_channels=32,
+                                        kernel_size=2,
+                                        stride=2,
+                                        padding=0))
 
-    img = read_image("uploaded.jpg", ImageReadMode.GRAY)
-    c, h, w = img.shape
+        self.maxpooling.append(nn.MaxPool2d(kernel_size=2, stride=2))
 
-    if h <= w:
-        img = CenterCrop(int(h))(img)
-        st.image(img.reshape(h, h, 1).numpy(), width=300)
-    else:
-        img = CenterCrop(int(w))(img)
-        st.image(img.reshape(w, w, 1).numpy(), width=300)
+        layers[0] = 1568 # Number of nodes after convolution and maxpooling
 
-    img = Resize(size=(28, 28))(img)
-
-    img = img / 255
-
-    layers = [784, 300, 10]
-
-    model = Net(layers)
-    model.load_state_dict(tload("model.pt"))
-    model.eval()
+        for input, output in zip(layers, layers[1:]):
+            layer = nn.Linear(input, output)
+            nn.init.kaiming_uniform_(layer.weight,
+                                        nonlinearity="relu") # "He" method
+            self.hidden.append(layer)
 
 
-    # show_data(validation_dataset[1000][0])
-    z = model(img.reshape(1, 1, 28, 28))
-    a = int(targmax(z))
-    if tmax(z) > 0.8:
-        st.write(f"I am {int(round(float(tmax(z)), 2) * 100)}% sure this is number '{a}'.")
-    else:
-        st.write("I don't know! Are you sure this is a picture of a handwritten digit?")
+    def forward(self, x):
+
+        l = len(self.maxpooling)
+        for i, layer in zip(range(l), self.cnn):
+            x = relu(layer(x))
+            x = self.maxpooling[i](x)
+
+        x = x.view(x.size(0), -1)
+        l = len(self.hidden)
+        for i, layer in zip(range(l), self.hidden):
+            if i < l - 1:
+                x = self.dropout(x)
+                x = relu(layer(x))
+            else:
+                x = nn.functional.softmax(layer(x), dim=1)
+
+        return x
