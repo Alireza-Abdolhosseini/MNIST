@@ -6,6 +6,8 @@ from Neural_Network import Net
 from torchvision.transforms import CenterCrop, Resize
 import streamlit as st
 
+IMG_SIZE = 28
+
 picture = st.file_uploader("Choose a picture of a handwritten digit:", type=['png', 'jpg'])
 
 if picture:
@@ -23,7 +25,7 @@ if picture:
         img = CenterCrop(int(w))(img)
         st.image(img.reshape(w, w, 1).numpy(), width=300)
 
-    img = Resize(size=(28, 28))(img)
+    img = Resize(size=(IMG_SIZE, IMG_SIZE))(img)
 
     img = img / 255
 
@@ -34,9 +36,8 @@ if picture:
     model.eval()
 
 
-    z = model(img.reshape(1, 1, 28, 28))
+    z = model(img.reshape(1, 1, IMG_SIZE, IMG_SIZE))
     a = int(targmax(z))
-    if tmax(z) > 0.9:
-        st.write(f"I am {int(round(float(tmax(z)), 2) * 100)}% sure this is number '{a}'.")
-    else:
-        st.write("I don't know! Are you sure this is a picture of a handwritten digit?")
+
+    st.write(f"I think this is number '{a}'.")
+
