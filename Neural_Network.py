@@ -8,8 +8,8 @@ class Net(nn.Module):
         self.dropout = nn.Dropout(p=0.1)
         self.hidden = nn.ModuleList()
         self.cnn = nn.ModuleList()
-        self.bn = nn.ModuleList()
         self.maxpooling = nn.ModuleList()
+        self.bn = nn.ModuleList()
 
         self.cnn.append(nn.Conv2d(in_channels=1, # Gray pictures
                                         out_channels=32,
